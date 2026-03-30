@@ -72,10 +72,12 @@ def run_pipeline(self, job_id: str, request_json):
     from app.models.schemas import GenerateRequest, BuildingSpec
     from app.agents.architect_agent import ArchitectAgent, DEFAULT_SPEC
     from app.agents.vision_agent import VisionAgent
+    from app.agents.critique_agent import CritiqueAgent
     from app.blender.geometry_validator import validate_geometry
     from app.blender.floor_plan_renderer import render_floor_plan
     from app.blender.script_generator import generate_blender_script
     from app.blender.runner import run_blender_script
+    from app.services.cost_estimator import estimate as estimate_cost
 
     # Deserialise request
     if isinstance(request_json, str):
@@ -132,6 +134,20 @@ def run_pipeline(self, job_id: str, request_json):
             if errors:
                 logger.warning("Geometry still invalid after retry — using default spec")
                 spec = DEFAULT_SPEC
+        # ── Step 3b: Cost estimate & design critique (non-blocking) ─────────────
+        update_progress(job_id, 0.30, "Estimating construction cost…")
+        try:
+            cost_estimate = estimate_cost(spec).model_dump()
+        except Exception as ce:
+            logger.warning("Cost estimation failed: %s", ce)
+            cost_estimate = {}
+
+        update_progress(job_id, 0.32, "Generating architect's critique…")
+        try:
+            critique = CritiqueAgent().critique(spec, request)
+        except Exception as cre:
+            logger.warning("Critique agent failed: %s", cre)
+            critique = []
 
         # ── Step 4: 2D floor plan ────────────────────────────────────────────
         update_progress(job_id, 0.35, "Rendering 2D floor plan…")
@@ -177,6 +193,8 @@ def run_pipeline(self, job_id: str, request_json):
             stage="Complete",
             variants=[variant],
             spec=spec_dict,
+            cost_estimate=cost_estimate,
+            critique=critique,
         )
         logger.info("Job %s completed successfully", job_id)
 

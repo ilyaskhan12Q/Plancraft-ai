@@ -3,7 +3,8 @@ All Pydantic v2 models for AI Architect backend.
 """
 from __future__ import annotations
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_validator
+
 import uuid
 
 
@@ -51,7 +52,7 @@ class RoomSpec(BaseModel):
     floor: int = 0
     has_window: bool = True
     has_door: bool = True
-    door_wall: str = Field(default="south", pattern="^(north|south|east|west)$")
+    door_wall: str = Field(default="south", pattern="^(north|south|east|west|none)$")
 
 
 class FloorSpec(BaseModel):
@@ -120,6 +121,26 @@ class StyleAnalysis(BaseModel):
     colors: Optional[List[str]] = Field(default_factory=list)
     features: Optional[List[str]] = Field(default_factory=list)
     raw: Optional[str] = None
+
+
+# ─────────────────────────── Cost Estimate ───────────────────────────────────
+
+class BillOfQuantities(BaseModel):
+    bricks: int = 0                 # number of standard bricks
+    cement_bags: int = 0            # 50kg bags
+    steel_kg: int = 0               # reinforcement steel in kg
+    paint_liters: int = 0           # exterior + interior paint
+    sand_cubic_meters: float = 0.0
+
+
+class CostEstimate(BaseModel):
+    covered_area_sqm: float = 0.0
+    covered_area_sqft: float = 0.0
+    cost_pkr_low: int = 0
+    cost_pkr_mid: int = 0
+    cost_pkr_high: int = 0
+    cost_usd_mid: int = 0
+    bill_of_quantities: BillOfQuantities = Field(default_factory=BillOfQuantities)
 
 
 # ─────────────────────────── Export ───────────────────────────────────────────

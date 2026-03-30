@@ -129,6 +129,8 @@ class JobStatus {
   final String stage;
   final String? error;
   final List<VariantResult> variants;
+  final CostEstimate? costEstimate;
+  final List<String> critique;
 
   const JobStatus({
     required this.jobId,
@@ -137,6 +139,8 @@ class JobStatus {
     required this.stage,
     this.error,
     this.variants = const [],
+    this.costEstimate,
+    this.critique = const [],
   });
 
   factory JobStatus.fromJson(Map<String, dynamic> j) => JobStatus(
@@ -148,11 +152,90 @@ class JobStatus {
         variants: (j['variants'] as List<dynamic>? ?? [])
             .map((v) => VariantResult.fromJson(v as Map<String, dynamic>))
             .toList(),
+        costEstimate: j['cost_estimate'] != null
+            ? CostEstimate.fromJson(
+                j['cost_estimate'] as Map<String, dynamic>)
+            : null,
+        critique: (j['critique'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList(),
       );
 
   bool get isDone => status == 'done';
   bool get isFailed => status == 'failed';
   bool get isRunning => status == 'running' || status == 'pending';
+}
+
+// ── Bill of Quantities ──────────────────────────────────────────────────
+
+class BillOfQuantities {
+  final int bricks;
+  final int cementBags;
+  final int steelKg;
+  final int paintLiters;
+  final double sandCubicMeters;
+
+  const BillOfQuantities({
+    this.bricks = 0,
+    this.cementBags = 0,
+    this.steelKg = 0,
+    this.paintLiters = 0,
+    this.sandCubicMeters = 0,
+  });
+
+  factory BillOfQuantities.fromJson(Map<String, dynamic> j) => BillOfQuantities(
+        bricks: (j['bricks'] as num?)?.toInt() ?? 0,
+        cementBags: (j['cement_bags'] as num?)?.toInt() ?? 0,
+        steelKg: (j['steel_kg'] as num?)?.toInt() ?? 0,
+        paintLiters: (j['paint_liters'] as num?)?.toInt() ?? 0,
+        sandCubicMeters: (j['sand_cubic_meters'] as num?)?.toDouble() ?? 0,
+      );
+}
+
+// ── Cost Estimate ─────────────────────────────────────────────────────────
+
+class CostEstimate {
+  final double coveredAreaSqm;
+  final double coveredAreaSqft;
+  final int costPkrLow;
+  final int costPkrMid;
+  final int costPkrHigh;
+  final int costUsdMid;
+  final BillOfQuantities boq;
+
+  const CostEstimate({
+    this.coveredAreaSqm = 0,
+    this.coveredAreaSqft = 0,
+    this.costPkrLow = 0,
+    this.costPkrMid = 0,
+    this.costPkrHigh = 0,
+    this.costUsdMid = 0,
+    this.boq = const BillOfQuantities(),
+  });
+
+  factory CostEstimate.fromJson(Map<String, dynamic> j) => CostEstimate(
+        coveredAreaSqm: (j['covered_area_sqm'] as num?)?.toDouble() ?? 0,
+        coveredAreaSqft: (j['covered_area_sqft'] as num?)?.toDouble() ?? 0,
+        costPkrLow: (j['cost_pkr_low'] as num?)?.toInt() ?? 0,
+        costPkrMid: (j['cost_pkr_mid'] as num?)?.toInt() ?? 0,
+        costPkrHigh: (j['cost_pkr_high'] as num?)?.toInt() ?? 0,
+        costUsdMid: (j['cost_usd_mid'] as num?)?.toInt() ?? 0,
+        boq: j['bill_of_quantities'] != null
+            ? BillOfQuantities.fromJson(
+                j['bill_of_quantities'] as Map<String, dynamic>)
+            : const BillOfQuantities(),
+      );
+
+  String _fmt(int n) {
+    if (n >= 10000000) return '${(n / 10000000).toStringAsFixed(1)} Cr';
+    if (n >= 100000) return '${(n / 100000).toStringAsFixed(1)} Lac';
+    return n.toString();
+  }
+
+  String get lowFormatted  => 'PKR ${_fmt(costPkrLow)}';
+  String get midFormatted  => 'PKR ${_fmt(costPkrMid)}';
+  String get highFormatted => 'PKR ${_fmt(costPkrHigh)}';
+  String get usdFormatted  => '\$${_fmt(costUsdMid)}';
 }
 
 // ── Export Links ──────────────────────────────────────────────────────────────
