@@ -62,6 +62,13 @@ async def export_stl(job_id: str):
                         filename=f"model_{job_id}.stl")
 
 
+@router.get("/export/{job_id}/dxf")
+async def export_dxf(job_id: str):
+    p = _require(_job_dir(job_id) / "floorplan" / "floor_plan.dxf")
+    return FileResponse(str(p), media_type="application/dxf",
+                        filename=f"floor_plan_{job_id}.dxf")
+
+
 @router.get("/export/{job_id}/links")
 async def export_links(job_id: str):
     base = f"{_base_url()}/export/{job_id}"
@@ -76,4 +83,6 @@ async def export_links(job_id: str):
                  if (jd / "render" / "model.glb").exists() else None,
         "stl": f"{base}/stl"
                if (jd / "render" / "model.stl").exists() else None,
+        "dxf": f"{base}/dxf"
+               if (jd / "floorplan" / "floor_plan.dxf").exists() else None,
     })
