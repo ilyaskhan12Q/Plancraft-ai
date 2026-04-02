@@ -69,3 +69,11 @@ backend/*.log
 
 # IDE
 .vscode/
+
+# Test Renders
+test_renders/
+backend/test_renders_integrated/
+
+# Binaries
+cloudflared
+cloudflared-linux-amd64.deb
