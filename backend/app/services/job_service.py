@@ -149,9 +149,13 @@ def run_pipeline(self, job_id: str, request_json):
             logger.warning("Critique agent failed: %s", cre)
             critique = []
 
-        # ── Step 4: 2D floor plan ────────────────────────────────────────────
-        update_progress(job_id, 0.35, "Rendering 2D floor plan…")
-        fp_path = render_floor_plan(spec, str(floorplan_dir))
+        # ── Step 4: 2D floor plan (Preview + professional CAD) ───────────────
+        update_progress(job_id, 0.35, "Rendering 2D floor plans (DXF/NanoCAD)…")
+        from app.services.designer_service import DesignerService
+        designer = DesignerService()
+        design_results = designer.render_all(spec, str(floorplan_dir))
+        fp_path = design_results.get("preview_png", "")
+        dxf_path = design_results.get("cad_dxf", "")
 
         # ── Step 5: Generate Blender script ──────────────────────────────────
         update_progress(job_id, 0.45, "Generating 3D scene script…")
@@ -177,6 +181,8 @@ def run_pipeline(self, job_id: str, request_json):
             "variant": "modern",
             "floorplan_url": f"{_base}/export/{job_id}/floorplan"
                              if os.path.exists(fp_path) else None,
+            "dxf_url": f"{_base}/export/{job_id}/dxf"
+                       if os.path.exists(dxf_path) else None,
             "render_url": f"{_base}/export/{job_id}/render"
                           if blender_result.get("render_png") else None,
             "model_url": f"{_base}/export/{job_id}/model"
