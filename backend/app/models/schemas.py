@@ -10,12 +10,21 @@ import uuid
 
 # ─────────────────────────── Input Models ────────────────────────────────────
 
+class Setbacks(BaseModel):
+    front: float = Field(default=0.0, ge=0)
+    back: float = Field(default=0.0, ge=0)
+    left: float = Field(default=0.0, ge=0)
+    right: float = Field(default=0.0, ge=0)
+
+
 class PlotSpec(BaseModel):
     length: float = Field(..., gt=0, description="Plot length in given units")
     width: float = Field(..., gt=0, description="Plot width in given units")
     unit: str = Field(default="meters", pattern="^(meters|feet)$")
     floors: int = Field(default=1, ge=1, le=10)
     orientation: str = Field(default="north", description="Primary road-facing direction")
+    plot_type: str = Field(default="standard", pattern="^(standard|corner|irregular)$")
+    setbacks: Setbacks = Field(default_factory=Setbacks)
 
 
 class RoomRequirements(BaseModel):
@@ -36,6 +45,10 @@ class GenerateRequest(BaseModel):
     budget: str = Field(default="medium", pattern="^(low|medium|high|luxury)$")
     region: str = Field(default="south_asian")
     description: Optional[str] = Field(default=None, max_length=1000)
+    floor_preferences: Optional[Dict[int, str]] = Field(
+        default=None, 
+        description="Optional mapping of floor number to specific requirements (e.g., {0: 'Garage and Shop'})"
+    )
     site_photo_key: Optional[str] = None
     style_photo_key: Optional[str] = None
     sketch_photo_key: Optional[str] = None

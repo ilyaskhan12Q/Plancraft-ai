@@ -15,23 +15,35 @@ class PlotInputScreen extends ConsumerStatefulWidget {
 class _PlotInputScreenState extends ConsumerState<PlotInputScreen> {
   final _lengthCtrl = TextEditingController(text: '12');
   final _widthCtrl = TextEditingController(text: '8');
+  final _frontSetbackCtrl = TextEditingController(text: '3');
+  final _backSetbackCtrl = TextEditingController(text: '1.5');
+  final _sideSetbackCtrl = TextEditingController(text: '1.5');
   int _floors = 2;
   String _unit = 'meters';
   String _orientation = 'north';
+  String _plotType = 'standard';
 
   static const _orientations = ['north', 'south', 'east', 'west'];
   static const _units = ['meters', 'feet'];
+  static const _plotTypes = ['standard', 'corner', 'irregular'];
 
   @override
   void dispose() {
     _lengthCtrl.dispose();
     _widthCtrl.dispose();
+    _frontSetbackCtrl.dispose();
+    _backSetbackCtrl.dispose();
+    _sideSetbackCtrl.dispose();
     super.dispose();
   }
 
   void _next() {
     final l = double.tryParse(_lengthCtrl.text);
     final w = double.tryParse(_widthCtrl.text);
+    final fs = double.tryParse(_frontSetbackCtrl.text) ?? 0;
+    final bs = double.tryParse(_backSetbackCtrl.text) ?? 0;
+    final ss = double.tryParse(_sideSetbackCtrl.text) ?? 0;
+
     if (l == null || w == null || l <= 0 || w <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter valid dimensions')),
@@ -44,6 +56,13 @@ class _PlotInputScreenState extends ConsumerState<PlotInputScreen> {
           unit: _unit,
           floors: _floors,
           orientation: _orientation,
+          plotType: _plotType,
+          setbacks: Setbacks(
+            front: fs,
+            back: bs,
+            left: ss,
+            right: ss,
+          ),
         ));
     context.push('/input/rooms');
   }
@@ -79,6 +98,47 @@ class _PlotInputScreenState extends ConsumerState<PlotInputScreen> {
                     ctrl: _widthCtrl,
                     label: 'Width',
                     hint: '8',
+                    suffix: _unit == 'meters' ? 'm' : 'ft',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            _SectionHeader('🏗 Plot Type'),
+            const SizedBox(height: 12),
+            _ChipRow(
+              options: _plotTypes,
+              selected: _plotType,
+              onSelect: (v) => setState(() => _plotType = v),
+            ),
+            const SizedBox(height: 24),
+            _SectionHeader('📏 Mandatory Setbacks'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _InputField(
+                    ctrl: _frontSetbackCtrl,
+                    label: 'Front',
+                    hint: '3',
+                    suffix: _unit == 'meters' ? 'm' : 'ft',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _InputField(
+                    ctrl: _backSetbackCtrl,
+                    label: 'Back',
+                    hint: '1.5',
+                    suffix: _unit == 'meters' ? 'm' : 'ft',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _InputField(
+                    ctrl: _sideSetbackCtrl,
+                    label: 'Sides',
+                    hint: '1.5',
                     suffix: _unit == 'meters' ? 'm' : 'ft',
                   ),
                 ),
