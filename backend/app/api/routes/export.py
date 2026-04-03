@@ -35,10 +35,16 @@ def _require(path: Path) -> Path:
 
 
 @router.get("/export/{job_id}/floorplan")
-async def export_floorplan(job_id: str):
-    p = _require(_job_dir(job_id) / "floorplan" / "floor_plan.png")
+async def export_floorplan_default(job_id: str):
+    # Default to floor 0
+    return await export_floorplan(job_id, 0)
+
+
+@router.get("/export/{job_id}/floorplan/{floor_index}")
+async def export_floorplan(job_id: str, floor_index: int):
+    p = _require(_job_dir(job_id) / "floorplan" / f"floor_{floor_index}.png")
     return FileResponse(str(p), media_type="image/png",
-                        filename=f"floorplan_{job_id}.png")
+                        filename=f"floorplan_{job_id}_f{floor_index}.png")
 
 
 @router.get("/export/{job_id}/render")
@@ -63,26 +69,45 @@ async def export_stl(job_id: str):
 
 
 @router.get("/export/{job_id}/dxf")
-async def export_dxf(job_id: str):
-    p = _require(_job_dir(job_id) / "floorplan" / "floor_plan.dxf")
+async def export_dxf_default(job_id: str):
+    # Default to floor 0
+    return await export_dxf(job_id, 0)
+
+
+@router.get("/export/{job_id}/dxf/{floor_index}")
+async def export_dxf(job_id: str, floor_index: int):
+    p = _require(_job_dir(job_id) / "floorplan" / f"floor_{floor_index}.dxf")
     return FileResponse(str(p), media_type="application/dxf",
-                        filename=f"floor_plan_{job_id}.dxf")
+                        filename=f"floor_plan_{job_id}_f{floor_index}.dxf")
 
 
 @router.get("/export/{job_id}/links")
 async def export_links(job_id: str):
     base = f"{_base_url()}/export/{job_id}"
     jd = _job_dir(job_id)
+    fp_dir = jd / "floorplan"
+    
+    # Dynamic list of floors
+    floor_plans = []
+    dxfs = []
+    if fp_dir.exists():
+        for f in sorted(fp_dir.glob("floor_*.png")):
+            idx = f.stem.split("_")[1]
+            floor_plans.append(f"{base}/floorplan/{idx}")
+        for f in sorted(fp_dir.glob("floor_*.dxf")):
+            idx = f.stem.split("_")[1]
+            dxfs.append(f"{base}/dxf/{idx}")
+
     return JSONResponse({
         "job_id": job_id,
-        "floorplan": f"{base}/floorplan"
-                     if (jd / "floorplan" / "floor_plan.png").exists() else None,
+        "floorplan": floor_plans[0] if floor_plans else None,
+        "floorplans": floor_plans,
         "render": f"{base}/render"
                   if (jd / "render" / "render.png").exists() else None,
         "model": f"{base}/model"
                  if (jd / "render" / "model.glb").exists() else None,
         "stl": f"{base}/stl"
                if (jd / "render" / "model.stl").exists() else None,
-        "dxf": f"{base}/dxf"
-               if (jd / "floorplan" / "floor_plan.dxf").exists() else None,
+        "dxf": dxfs[0] if dxfs else None,
+        "dxfs": dxfs,
     })

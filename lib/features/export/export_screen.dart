@@ -47,40 +47,85 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         ? status!.variants.first
         : null;
 
-    final files = [
-      _ExportFile(
-        label: '2D Floor Plan',
-        icon: Icons.map_outlined,
-        ext: 'PNG',
-        desc: '200 DPI — printable A3',
-        url: variant?.floorplanUrl,
-        filename: 'floor_plan.png',
-      ),
-      _ExportFile(
+    final List<_ExportFile> files = [];
+
+    if (variant != null) {
+      // 2D Floor Plans
+      if (variant.floorplanUrls.isNotEmpty) {
+        for (int i = 0; i < variant.floorplanUrls.length; i++) {
+          files.add(_ExportFile(
+            label: 'Floor $i Plan',
+            icon: Icons.map_outlined,
+            ext: 'PNG',
+            desc: '200 DPI — Floor $i Layout',
+            url: variant.floorplanUrls[i],
+            filename: 'floor_${i}_plan.png',
+          ));
+        }
+      } else {
+        files.add(_ExportFile(
+          label: '2D Floor Plan',
+          icon: Icons.map_outlined,
+          ext: 'PNG',
+          desc: '200 DPI — printable A3',
+          url: variant.floorplanUrl,
+          filename: 'floor_plan.png',
+        ));
+      }
+
+      // Professional CAD
+      if (variant.cadUrls.isNotEmpty) {
+        for (int i = 0; i < variant.cadUrls.length; i++) {
+          files.add(_ExportFile(
+            label: 'Floor $i CAD',
+            icon: Icons.architecture,
+            ext: 'DXF',
+            desc: 'NanoCAD & Blender Compatible',
+            url: variant.cadUrls[i],
+            filename: 'floor_${i}_plan.dxf',
+          ));
+        }
+      } else {
+        files.add(_ExportFile(
+          label: 'Professional CAD',
+          icon: Icons.architecture,
+          ext: 'DXF',
+          desc: 'NanoCAD & Blender Compatible',
+          url: variant.dxfUrl,
+          filename: 'floor_plan.dxf',
+        ));
+      }
+
+      // 3D Render
+      files.add(_ExportFile(
         label: '3D Render',
         icon: Icons.image_outlined,
         ext: 'PNG',
-        desc: '1280×720 — EEVEE render',
-        url: variant?.renderUrl,
+        desc: '1920×1080 — Cycles export',
+        url: variant.renderUrl,
         filename: 'render.png',
-      ),
-      _ExportFile(
+      ));
+
+      // 3D Model
+      files.add(_ExportFile(
         label: '3D Model',
         icon: Icons.view_in_ar,
         ext: 'GLB',
         desc: 'GLTF binary — AR / Unity',
-        url: variant?.modelUrl,
+        url: variant.modelUrl,
         filename: 'model.glb',
-      ),
-      _ExportFile(
+      ));
+
+      // 3D Print File
+      files.add(_ExportFile(
         label: '3D Print File',
         icon: Icons.print_outlined,
         ext: 'STL',
         desc: 'FDM / resin printers',
-        url: variant?.stlUrl,
+        url: variant.stlUrl,
         filename: 'model.stl',
-      ),
-    ];
+      ));
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.black,
