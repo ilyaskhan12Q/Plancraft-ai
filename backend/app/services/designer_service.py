@@ -37,8 +37,11 @@ class DesignerService:
 
         # 2. Professional CAD Export (ezdxf - NanoCAD compatible)
         try:
-            dxf_path = export_to_dxf(spec, output_dir)
-            results["cad_dxf"] = dxf_path
+            dxf_paths = export_to_dxf(spec, output_dir)
+            results["cad_dxf_list"] = dxf_paths
+            # For backward compatibility
+            if dxf_paths:
+                results["cad_dxf"] = dxf_paths[0]
         except Exception as e:
             logger.error("DXF export failed: %s", e)
 

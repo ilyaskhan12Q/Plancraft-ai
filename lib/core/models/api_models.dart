@@ -142,6 +142,8 @@ class VariantResult {
   final String? modelUrl;
   final String? stlUrl;
   final List<String> previews;
+  final List<String> floorplanUrls;
+  final List<String> cadUrls;
 
   const VariantResult({
     required this.variant,
@@ -150,6 +152,8 @@ class VariantResult {
     this.modelUrl,
     this.stlUrl,
     this.previews = const [],
+    this.floorplanUrls = const [],
+    this.cadUrls = const [],
   });
 
   factory VariantResult.fromJson(Map<String, dynamic> j) => VariantResult(
@@ -159,6 +163,12 @@ class VariantResult {
         modelUrl: j['model_url'] as String?,
         stlUrl: j['stl_url'] as String?,
         previews: (j['previews'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList(),
+        floorplanUrls: (j['floorplan_urls'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList(),
+        cadUrls: (j['dxf_urls'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList(),
       );
