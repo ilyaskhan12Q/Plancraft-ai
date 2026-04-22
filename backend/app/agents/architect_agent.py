@@ -204,8 +204,7 @@ def _build_prompt(
     budget_key = request.budget if request.budget in _STYLE_ARCHETYPES else "medium"
     archetype_name, archetype_guide = _STYLE_ARCHETYPES[budget_key]
 
-    ctx = f"""You are a world-class Lead Architect at a top-tier international firm, specializing in {request.region} residential masterpieces.
-Your designs are renowned for their spatial intelligence, flow, and "extraordinary" attention to detail that ensures flawless 3D realization.
+    ctx = f"""You are a world-class Lead Architect specializing in {request.region} residential design.
 
 ## Style Persona: {archetype_name}
 {archetype_guide}
@@ -217,20 +216,14 @@ Your designs are renowned for their spatial intelligence, flow, and "extraordina
 - Floors: {plot.floors}
 - Rooms requested: {rms.bedrooms} bedrooms, {rms.bathrooms} bathrooms, living={rms.living_room}, kitchen={rms.kitchen}, dining={rms.dining}, garage={rms.garage}, study={rms.study}
 
-## Floor Preferences
-{json.dumps(request.floor_preferences or {}, indent=2)}
-
-## Client Notes
-{request.description or 'None'}
-
-{_ENGINEERING_RULES}
+## Engineering & Pakistani Architectural Standards (MANDATORY)
+1. **The Drawing Room (Guest Room)**: MUST be near the main entrance with a separate door for guests.
+2. **TV Lounge**: Central circulation hub for the family.
+3. **Attached Bathrooms**: EVERY bedroom MUST have an attached bathroom.
+4. **Layout**: Use a logical, leak-proof grid. NO OVERLAPPING ROOMS.
 
 ## Task: Generate COMPLETE Building Specification
 - Create a distinct and logical layout for EVERY floor.
-- Ensure the Ground Floor (Floor 0) handles public and service entries.
-- Ensure Upper Floors handle private residential suites effectively.
-- Annotate rooms with exact coordinates (x, y) that form a rational, leak-proof grid.
-- NO OVERLAPPING ROOMS.
 - Respond ONLY with a single valid JSON object following this schema:
 {_SCHEMA_HINT}
 """
@@ -337,7 +330,7 @@ class ArchitectAgent:
         for attempt in range(max_retries + 1):
             try:
                 response = self._client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-flash-lite-latest",
                     contents=prompt,
                 )
                 text = response.text or ""
