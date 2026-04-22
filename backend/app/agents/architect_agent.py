@@ -20,36 +20,6 @@ from app.models.schemas import (
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────── Style Archetypes ────────────────────────────────
-
-_STYLE_ARCHETYPES = {
-    "low": (
-        "Pakistani Cost-Saver",
-        "Use load-bearing brick construction. Minimise corridors — open layout. "
-        "Standard 9×4.5 inch brick walls. Flat reinforced-concrete roof. "
-        "Prefer shared bathroom walls to reduce plumbing runs. "
-        "Target cost: PKR 3,000–3,800/sqft."
-    ),
-    "medium": (
-        "Contemporary South Asian",
-        "Use RCC frame with brick infill. Include a proper entrance hall/lobby. "
-        "Balcony on upper floor(s). Tiled exterior finish. "
-        "Target cost: PKR 4,000–5,500/sqft."
-    ),
-    "high": (
-        "Modern Minimalist",
-        "RCC frame, open-plan living/dining, floor-to-ceiling glazing on south/garden side. "
-        "Imported marble flooring. Concealed wiring and plumbing. "
-        "Feature staircase as design element. Target cost: PKR 6,000–8,000/sqft."
-    ),
-    "luxury": (
-        "Luxury Contemporary",
-        "Double-height entrance lobby, home theatre, en-suite for every bedroom. "
-        "Smart-home wiring. Rooftop terrace. Imported stone cladding. "
-        "Target cost: PKR 9,000+/sqft."
-    ),
-}
-
 # ─────────────────────────── Default Spec ────────────────────────────────────
 
 DEFAULT_SPEC = BuildingSpec(
@@ -69,9 +39,9 @@ DEFAULT_SPEC = BuildingSpec(
                 RoomSpec(name="Living Room", width=5.0, depth=4.0, x=0.0, y=0.0,
                          floor=0, has_window=True, has_door=True, door_wall="south"),
                 RoomSpec(name="Kitchen",     width=3.0, depth=3.0, x=5.0, y=0.0,
-                         floor=0, has_window=True, has_door=False, door_wall="none"),
+                         floor=0, has_window=True, has_door=False, door_wall="south"),
                 RoomSpec(name="Dining",      width=3.0, depth=3.0, x=5.0, y=3.0,
-                         floor=0, has_window=True, has_door=False, door_wall="none"),
+                         floor=0, has_window=True, has_door=False, door_wall="east"),
                 RoomSpec(name="Bathroom",    width=2.0, depth=2.0, x=3.0, y=4.0,
                          floor=0, has_window=False, has_door=True, door_wall="south"),
             ],
@@ -124,59 +94,11 @@ _SCHEMA_HINT = """
           "has_window": true,
           "has_door": true,
           "door_wall": "south"
-        },
-        {
-          "name": "Open Kitchen",
-          "width": 3.0,
-          "depth": 3.0,
-          "x": 5.0,
-          "y": 0.0,
-          "floor": 0,
-          "has_window": true,
-          "has_door": false,
-          "door_wall": "none"
         }
       ]
     }
   ]
 }
-"""
-
-# ─────────────────────────── Engineering Rules ───────────────────────────────
-
-_ENGINEERING_RULES = """\
-## Engineering & Building Standards
-You MUST follow these professional standards:
-
-### Room Sizes (minimum)
-- Bedroom: 9m² minimum (e.g. 3m × 3m)
-- Master Bedroom: 12m² minimum (e.g. 3.5m × 3.5m)
-- Bathroom: 4m² minimum (e.g. 2m × 2m)
-- Kitchen: 6m² minimum (e.g. 2.5m × 2.4m)
-- Living Room: 15m² minimum (e.g. 4m × 4m)
-- Corridor / Hall: 1.5m wide minimum
-
-### Circulation
-- Ground floor MUST have an entrance hall or lobby connecting to other rooms
-- Upper floors MUST have a landing area connecting to bedrooms
-- Every floor with bedrooms must have at least one bathroom on the same floor
-
-### Window & Door Placement
-- Bedrooms MUST have has_window=true (natural light requirement)
-- Bathrooms facing road should use frosted windows (set has_window=false if no privacy possible)
-- Open-plan rooms (Kitchen open to Living, etc.) must use door_wall="none" and has_door=false
-- Main entrance door MUST face either the road-facing direction or within 90° of it
-
-### Structural
-- Do NOT place rooms with overlapping coordinates
-- ALL rooms must fit within the plot bounds (0,0) to (plot_length, plot_width)
-- Floor height must be between 2.8m and 4.0m
-
-### door_wall RULES (CRITICAL)
-- ONLY allowed values: "north", "south", "east", "west", "none"
-- Use "none" ONLY for open-plan spaces (kitchen open to dining, etc.)
-- NEVER use "none" for bedrooms or bathrooms — they MUST have a real door_wall
-- NEVER leave door_wall blank or set it to null
 """
 
 # ─────────────────────────── Prompt Builder ──────────────────────────────────
@@ -190,6 +112,7 @@ def _build_prompt(
     plot = request.plot
     rms = request.rooms
 
+<<<<<<< HEAD
     # Pick style archetype
     budget_key = request.budget if request.budget in _STYLE_ARCHETYPES else "medium"
     archetype_name, archetype_guide = _STYLE_ARCHETYPES[budget_key]
@@ -226,30 +149,41 @@ Your designs are functional, structurally sound, and optimised for the client's 
 - Plot: {plot.length}m × {plot.width}m ({plot.length * plot.width:.0f}m² = {plot.length * plot.width * 10.764:.0f} sqft)
 - Floors: {plot.floors}, Road-facing: {plot.orientation}
 - Rooms requested: {rms.bedrooms} bedrooms, {rms.bathrooms} bathrooms,
+=======
+    ctx = f"""You are a professional architect. Generate a complete building design spec.
+
+## Project Brief
+- Plot: {plot.length}m × {plot.width}m, {plot.floors} floor(s), facing {plot.orientation}
+- Rooms: {rms.bedrooms} bedrooms, {rms.bathrooms} bathrooms,
+>>>>>>> parent of 046ab37 (feat: integrate cost estimator and design critique)
   living={rms.living_room}, kitchen={rms.kitchen}, dining={rms.dining},
-  garage={rms.garage}, study={rms.study}, servant_quarter={rms.servant_quarter}
-- Preferred style: {request.preferred_style}
-- Budget tier: {request.budget}
+  garage={rms.garage}, study={rms.study}
+- Style: {request.preferred_style}
+- Budget: {request.budget}
 - Region: {request.region}
+<<<<<<< HEAD
 - Client notes: {request.description or 'None'}
 >>>>>>> parent of a8c1d73 (Enhance 2D design with multi-floor support, detailed plot inputs, and 2026 architectural reasoning)
+=======
+- Notes: {request.description or 'None'}
+>>>>>>> parent of 046ab37 (feat: integrate cost estimator and design critique)
 """
     if site:
         ctx += f"\n## Site Analysis\n{site.raw or ''}\n"
     if style_ref:
         ctx += f"\n## Style Reference\nColors: {style_ref.colors}\nFeatures: {style_ref.features}\n"
     if validation_errors:
-        ctx += f"\n## ⚠️ GEOMETRY ERRORS — YOU MUST FIX THESE\n"
+        ctx += f"\n## ⚠️ Fix These Geometry Errors\n"
         for e in validation_errors:
             ctx += f"- {e}\n"
-        ctx += "\nRe-generate the COMPLETE building spec with these errors corrected.\n"
 
     ctx += f"""
-{_ENGINEERING_RULES}
-
-## Response Format
-- Respond ONLY with a single valid JSON object — no explanation, no markdown prose
-- Match this schema exactly (door_wall can be "north"/"south"/"east"/"west"/"none"):
+## Instructions
+- ALL rooms must fit within {plot.length}m × {plot.width}m per floor
+- Rooms must NOT overlap
+- Each room MUST have: name, width, depth, x, y, floor, has_window, has_door, door_wall
+- Use metric units (meters)
+- Respond ONLY with a single JSON object matching this schema exactly:
 {_SCHEMA_HINT}
 """
     return ctx
@@ -289,10 +223,9 @@ def _extract_json(text: str) -> Optional[dict]:
 
 def _adapt_spec(raw: dict) -> dict:
     """Normalise Gemini output to match BuildingSpec schema."""
+    # Ensure floors list
     if "floors" not in raw or not isinstance(raw["floors"], list):
         raw["floors"] = []
-
-    VALID_DOOR_WALLS = {"north", "south", "east", "west", "none"}
 
     for fl in raw["floors"]:
         if "rooms" not in fl:
@@ -306,13 +239,9 @@ def _adapt_spec(raw: dict) -> dict:
             # ensure floor field
             if "floor" not in rm:
                 rm["floor"] = fl.get("floor_number", 0)
-            # fix door_wall — map invalid values to a sensible default
-            dw = str(rm.get("door_wall", "")).strip().lower()
-            if dw not in VALID_DOOR_WALLS:
-                # rooms with no door → "none", rooms with a door → "south"
-                rm["door_wall"] = "none" if not rm.get("has_door", True) else "south"
-            else:
-                rm["door_wall"] = dw
+            # ensure door_wall
+            if "door_wall" not in rm:
+                rm["door_wall"] = "south"
 
     # Camera aliases
     cam = raw.get("camera", {})
