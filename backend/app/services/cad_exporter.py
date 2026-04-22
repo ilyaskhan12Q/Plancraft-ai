@@ -28,46 +28,49 @@ COLOR_TEXT = 252      # Light Grey
 COLOR_DIM = 251       # Grey
 
 
-def export_to_dxf(spec: BuildingSpec, output_dir: str) -> List[str]:
+def export_to_dxf(spec: BuildingSpec, output_dir: str) -> str:
     """
-    Export each floor of the BuildingSpec to its own professional DXF file.
-    Returns a list of absolute paths to the saved DXFs.
+    Export BuildingSpec to a professional DXF file.
+    Returns the absolute path to the saved DXF.
     """
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    saved_paths = []
+    out_path = os.path.join(output_dir, "floor_plan.dxf")
+
+    doc = ezdxf.new("R2010")  # Compatibility for most CAD versions including nanoCAD
+    msp = doc.modelspace()
+
+    # Create Layers
+    doc.layers.add(LAYER_WALLS, color=COLOR_WALL_OUTER)
+    doc.layers.add(LAYER_ROOMS, color=COLOR_TEXT)
+    doc.layers.add(LAYER_DOORS, color=COLOR_DOOR)
+    doc.layers.add(LAYER_WINDOW, color=COLOR_WINDOW)
+    doc.layers.add(LAYER_TEXT, color=COLOR_TEXT)
+    doc.layers.add(LAYER_DIM, color=COLOR_DIM)
+
+    # Offset for multi-floor side-by-side display
+    offset_x = 0
+    gap = 5.0
 
     for fl in sorted(spec.floors, key=lambda f: f.floor_number):
         if not fl.rooms:
             continue
 
-        floor_num = fl.floor_number
-        out_path = os.path.join(output_dir, f"floor_{floor_num}.dxf")
-        
-        doc = ezdxf.new("R2010")  # High compatibility
-        msp = doc.modelspace()
+        min_rm_x = min(rm.x for rm in fl.rooms)
+        floor_w = max(rm.x + rm.width for rm in fl.rooms) - min_rm_x
 
-        # Create Layers
-        doc.layers.add(LAYER_WALLS, color=COLOR_WALL_OUTER)
-        doc.layers.add(LAYER_ROOMS, color=COLOR_TEXT)
-        doc.layers.add(LAYER_DOORS, color=COLOR_DOOR)
-        doc.layers.add(LAYER_WINDOW, color=COLOR_WINDOW)
-        doc.layers.add(LAYER_TEXT, color=COLOR_TEXT)
-        doc.layers.add(LAYER_DIM, color=COLOR_DIM)
-
-        # Draw the single floor at (0,0) origin
-        _draw_floor_dxf(msp, fl, floor_offset_x=0)
+        _draw_floor_dxf(msp, fl, floor_offset_x = offset_x - min_rm_x)
         
         # Add Floor Label
-        label = f"FLOOR {floor_num}" if floor_num > 0 else "GROUND FLOOR PLAN"
+        label = f"FLOOR {fl.floor_number}" if fl.floor_number > 0 else "GROUND FLOOR"
         msp.add_text(
             label,
-            dxfattribs={"layer": LAYER_TEXT, "height": 0.6, "style": "Standard"}
-        ).set_placement((0, -2.0))
+            dxfattribs={"layer": LAYER_TEXT, "height": 0.5, "style": "Standard"}
+        ).set_placement((offset_x + floor_w / 2, -1.5), align=TextEntityAlignment.CENTER)
 
-        doc.saveas(out_path)
-        saved_paths.append(out_path)
+        offset_x += floor_w + gap
 
-    return saved_paths
+    doc.saveas(out_path)
+    return out_path
 
 
 def _draw_floor_dxf(msp, floor: FloorSpec, floor_offset_x: float) -> None:

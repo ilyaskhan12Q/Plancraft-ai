@@ -169,31 +169,25 @@ def run_pipeline(self, job_id: str, request_json):
         blender_result = run_blender_script(script, str(render_dir), "modern")
 
         # ── Build result URLs ──────────────────────────────────────────────────
-        _base = os.getenv('BASE_URL', 'http://localhost:8080')
-        base_export = f"{_base}/export/{job_id}"
-        
-        # Determine number of floors from generated files
-        floor_plans = []
-        dxfs = []
-        if floorplan_dir.exists():
-            for f in sorted(floorplan_dir.glob("floor_*.png")):
-                idx = f.stem.split("_")[1]
-                floor_plans.append(f"{base_export}/floorplan/{idx}")
-            for f in sorted(floorplan_dir.glob("floor_*.dxf")):
-                idx = f.stem.split("_")[1]
-                dxfs.append(f"{base_export}/dxf/{idx}")
+        def url(path: Optional[str]) -> Optional[str]:
+            if not path or not os.path.exists(path):
+                return None
+            rel = os.path.relpath(path, RENDERS_DIR)
+            _base = os.getenv('BASE_URL', 'http://localhost:8080')
+            return f"{_base}/renders/{rel.replace(os.sep, '/')}"
 
+        _base = os.getenv('BASE_URL', 'http://localhost:8080')
         variant = {
             "variant": "modern",
-            "floorplan_url": floor_plans[0] if floor_plans else None,
-            "floorplan_urls": floor_plans,
-            "dxf_url": dxfs[0] if dxfs else None,
-            "dxf_urls": dxfs,
-            "render_url": f"{base_export}/render"
+            "floorplan_url": f"{_base}/export/{job_id}/floorplan"
+                             if os.path.exists(fp_path) else None,
+            "dxf_url": f"{_base}/export/{job_id}/dxf"
+                       if os.path.exists(dxf_path) else None,
+            "render_url": f"{_base}/export/{job_id}/render"
                           if blender_result.get("render_png") else None,
-            "model_url": f"{base_export}/model"
+            "model_url": f"{_base}/export/{job_id}/model"
                          if blender_result.get("model_glb") else None,
-            "stl_url": f"{base_export}/stl"
+            "stl_url": f"{_base}/export/{job_id}/stl"
                        if blender_result.get("model_stl") else None,
         }
 
