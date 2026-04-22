@@ -39,38 +39,13 @@ class ResultsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 2D Floor Plan(s)
+                  // 2D Floor Plan
                   _ResultSection(
-                    title: '🗺 2D Floor Plans',
-                    subtitle: 'Architectural Details · Professional Grade',
-                    child: variant != null && variant.previews.isNotEmpty
-                        ? Column(
-                            children: variant.previews
-                                .asMap()
-                                .entries
-                                .map((entry) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 16),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Floor ${entry.key}',
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                color: AppTheme.gold,
-                                                fontWeight: FontWeight.w600),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _ImageCard(url: entry.value),
-                                        ],
-                                      ),
-                                    ))
-                                .toList(),
-                          )
-                        : variant?.floorplanUrl != null
-                            ? _ImageCard(url: variant!.floorplanUrl!)
-                            : const _Placeholder('Floor plan not available'),
+                    title: '🗺 2D Floor Plan',
+                    subtitle: '150 DPI · Printable A3',
+                    child: variant?.floorplanUrl != null
+                        ? _ImageCard(url: variant!.floorplanUrl!)
+                        : const _Placeholder('Floor plan not available'),
                   ),
                   const SizedBox(height: 24),
                   // 3D Render

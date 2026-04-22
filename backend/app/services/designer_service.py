@@ -20,18 +20,14 @@ class DesignerService:
 
     def render_all(self, spec: BuildingSpec, output_dir: str) -> dict:
         """
-        Produce both quick previews (PNGs) and a professional CAD file (DXF).
+        Produce both a quick preview (PNG) and a professional CAD file (DXF).
         """
         results = {}
 
-        # 1. Quick Previews (Matplotlib - one per floor)
+        # 1. Quick Preview (Matplotlib)
         try:
-            preview_paths = matplotlib_render(spec, output_dir)
-            # Store as a list of URLs/paths
-            results["previews"] = preview_paths
-            # For backward compatibility if any service expects a single string
-            if preview_paths:
-                results["preview_png"] = preview_paths[0]
+            preview_path = matplotlib_render(spec, output_dir)
+            results["preview_png"] = preview_path
         except Exception as e:
             logger.error("Matplotlib preview failed: %s", e)
 

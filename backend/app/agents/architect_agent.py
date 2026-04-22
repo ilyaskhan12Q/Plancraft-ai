@@ -145,41 +145,38 @@ _SCHEMA_HINT = """
 # ─────────────────────────── Engineering Rules ───────────────────────────────
 
 _ENGINEERING_RULES = """\
-## Engineering & 2026 Architectural Standards
-You MUST follow these professional standards for modern luxury design:
-
-### 2026 Design Principles
-- **Zoned Openness**: Use architectural dividers (archways, ceiling shifts) to define zones (kitchen vs living) without full walls.
-- **Biophilic Design**: Integrate natural light, indoor courtyards, and floor-to-ceiling glazing where privacy allows.
-- **Wellness Architecture**: Prioritize spacious, spa-like bathrooms and dedicated fitness/meditation flex-spaces.
-- **Indoor-Outdoor Flow**: Ensure easy access to terraces, balconies, or gardens from living areas.
-- **Functional Hubs**: Include a scullery or laundry prep area for luxury-tier designs.
+## Engineering & Building Standards
+You MUST follow these professional standards:
 
 ### Room Sizes (minimum)
-- Bedroom: 10m² minimum (Standard: 3m × 3.5m)
-- Master Bedroom: 15m² minimum (Standard: 4m × 4m)
-- Bathroom: 4.5m² minimum (Standard: 2.2m × 2.2m)
-- Kitchen: 8m² minimum (Standard: 3m × 2.8m)
-- Living Room: 18m² minimum (Standard: 4.5m × 4m)
+- Bedroom: 9m² minimum (e.g. 3m × 3m)
+- Master Bedroom: 12m² minimum (e.g. 3.5m × 3.5m)
+- Bathroom: 4m² minimum (e.g. 2m × 2m)
+- Kitchen: 6m² minimum (e.g. 2.5m × 2.4m)
+- Living Room: 15m² minimum (e.g. 4m × 4m)
 - Corridor / Hall: 1.5m wide minimum
 
-### Circulation & Floor Planning
-- **Ground Floor**: MUST have a proper entrance lobby and direct access to garage/entry.
-- **Upper Floors**: MUST have a central landing or "pyala" space connecting bedrooms.
-- **Separation**: Keep private spaces (bedrooms) away from high-traffic zones (formal drawing rooms).
+### Circulation
+- Ground floor MUST have an entrance hall or lobby connecting to other rooms
+- Upper floors MUST have a landing area connecting to bedrooms
+- Every floor with bedrooms must have at least one bathroom on the same floor
 
 ### Window & Door Placement
-- Bedrooms MUST have large windows for natural light.
-- Bathrooms facing public roads should use high-level windows.
-- Main entrance door MUST be prominent and face the road or entry court.
+- Bedrooms MUST have has_window=true (natural light requirement)
+- Bathrooms facing road should use frosted windows (set has_window=false if no privacy possible)
+- Open-plan rooms (Kitchen open to Living, etc.) must use door_wall="none" and has_door=false
+- Main entrance door MUST face either the road-facing direction or within 90° of it
 
-### Plot & Setbacks
-- ALL rooms must fit within plot boundaries minus the mandatory setbacks.
-- Front Setback: Typically 3m-5m for parking/lawn. Back/Side: 1.5m-3m.
+### Structural
+- Do NOT place rooms with overlapping coordinates
+- ALL rooms must fit within the plot bounds (0,0) to (plot_length, plot_width)
+- Floor height must be between 2.8m and 4.0m
 
 ### door_wall RULES (CRITICAL)
 - ONLY allowed values: "north", "south", "east", "west", "none"
-- Use "none" ONLY for open-plan transitions.
+- Use "none" ONLY for open-plan spaces (kitchen open to dining, etc.)
+- NEVER use "none" for bedrooms or bathrooms — they MUST have a real door_wall
+- NEVER leave door_wall blank or set it to null
 """
 
 # ─────────────────────────── Prompt Builder ──────────────────────────────────
@@ -193,23 +190,22 @@ def _build_prompt(
     plot = request.plot
     rms = request.rooms
 
-    # Determine plot dimensions if specified in Marla/Kanal
-    desc = (request.description or "").lower()
-    marla_hint = ""
-    if "5 marla" in desc: marla_hint = "Typical 5 Marla (25'x45')"
-    elif "10 marla" in desc: marla_hint = "Typical 10 Marla (35'x65')"
-    elif "1 kanal" in desc: marla_hint = "Typical 1 Kanal (50'x90')"
-
     # Pick style archetype
     budget_key = request.budget if request.budget in _STYLE_ARCHETYPES else "medium"
     archetype_name, archetype_guide = _STYLE_ARCHETYPES[budget_key]
 
+<<<<<<< HEAD
     ctx = f"""You are a world-class Lead Architect specializing in {request.region} residential design.
+=======
+    ctx = f"""You are a senior licensed architect with 20 years of experience in {request.region} residential design.
+Your designs are functional, structurally sound, and optimised for the client's budget.
+>>>>>>> parent of a8c1d73 (Enhance 2D design with multi-floor support, detailed plot inputs, and 2026 architectural reasoning)
 
 ## Style Persona: {archetype_name}
 {archetype_guide}
 
 ## Project Brief
+<<<<<<< HEAD
 - Plot Size: {plot.length}m × {plot.width}m ({marla_hint})
 - Plot Type: {plot.plot_type}, Road-facing: {plot.orientation}
 - Setbacks: Front={plot.setbacks.front}m, Back={plot.setbacks.back}m, Sides={plot.setbacks.left}m/{plot.setbacks.right}m
@@ -226,6 +222,17 @@ def _build_prompt(
 - Create a distinct and logical layout for EVERY floor.
 - Respond ONLY with a single valid JSON object following this schema:
 {_SCHEMA_HINT}
+=======
+- Plot: {plot.length}m × {plot.width}m ({plot.length * plot.width:.0f}m² = {plot.length * plot.width * 10.764:.0f} sqft)
+- Floors: {plot.floors}, Road-facing: {plot.orientation}
+- Rooms requested: {rms.bedrooms} bedrooms, {rms.bathrooms} bathrooms,
+  living={rms.living_room}, kitchen={rms.kitchen}, dining={rms.dining},
+  garage={rms.garage}, study={rms.study}, servant_quarter={rms.servant_quarter}
+- Preferred style: {request.preferred_style}
+- Budget tier: {request.budget}
+- Region: {request.region}
+- Client notes: {request.description or 'None'}
+>>>>>>> parent of a8c1d73 (Enhance 2D design with multi-floor support, detailed plot inputs, and 2026 architectural reasoning)
 """
     if site:
         ctx += f"\n## Site Analysis\n{site.raw or ''}\n"
@@ -235,8 +242,16 @@ def _build_prompt(
         ctx += f"\n## ⚠️ GEOMETRY ERRORS — YOU MUST FIX THESE\n"
         for e in validation_errors:
             ctx += f"- {e}\n"
-        ctx += "\nRe-generate the COMPLETE corrected spec.\n"
+        ctx += "\nRe-generate the COMPLETE building spec with these errors corrected.\n"
 
+    ctx += f"""
+{_ENGINEERING_RULES}
+
+## Response Format
+- Respond ONLY with a single valid JSON object — no explanation, no markdown prose
+- Match this schema exactly (door_wall can be "north"/"south"/"east"/"west"/"none"):
+{_SCHEMA_HINT}
+"""
     return ctx
 
 

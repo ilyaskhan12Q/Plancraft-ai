@@ -302,69 +302,96 @@ def _render_single_floor(ax, floor: FloorSpec, spec: BuildingSpec,
     return (min_x + floor_offset_x, max_x + floor_offset_x, min_y, max_y)
 
 
-def render_floor_plan(spec: BuildingSpec, output_dir: str) -> List[str]:
+def render_floor_plan(spec: BuildingSpec, output_dir: str) -> str:
     """
-    Render each floor to its own PNG file.
-    Returns a list of absolute paths to the saved PNGs.
+    Render all floors to a single PNG file, side by side.
+    Returns the absolute path to the saved PNG.
     """
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    saved_paths = []
+    out_path = os.path.join(output_dir, "floor_plan.png")
 
     if not spec.floors or all(not fl.rooms for fl in spec.floors):
-        out_path = os.path.join(output_dir, "floor_0.png")
-        fig, ax = plt.subplots(figsize=(10, 8))
+        fig, ax = plt.subplots(figsize=(11.69, 8.27))
         ax.text(0.5, 0.5, "No rooms defined", transform=ax.transAxes,
                 ha="center", va="center", fontsize=14)
         fig.savefig(out_path, dpi=200, bbox_inches="tight")
         plt.close(fig)
-        return [out_path]
+        return out_path
 
+    # Calculate total width needed (all floors side by side)
+    floor_widths = []
+    gap = 3.0  # gap between floors
+    for fl in spec.floors:
+        if not fl.rooms:
+            continue
+        xs = [rm.x + rm.width for rm in fl.rooms]
+        floor_widths.append(max(xs) - min(rm.x for rm in fl.rooms))
+
+    n_floors = len([fl for fl in spec.floors if fl.rooms])
+    total_w = sum(floor_widths) + gap * (n_floors - 1) if n_floors > 1 else (floor_widths[0] if floor_widths else 10)
+
+    # Compute figure size
+    max_depth = max(
+        (max(rm.y + rm.depth for rm in fl.rooms) - min(rm.y for rm in fl.rooms))
+        for fl in spec.floors if fl.rooms
+    )
+
+    fig_w = max(14, total_w * 1.3 + 4)
+    fig_h = max(10, max_depth * 1.5 + 4)
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+
+    # Render each floor side by side
+    offset_x = 0
+    all_bounds = []
     for fl in sorted(spec.floors, key=lambda f: f.floor_number):
         if not fl.rooms:
             continue
-            
-        floor_num = fl.floor_number
-        out_path = os.path.join(output_dir, f"floor_{floor_num}.png")
-        
-        # Calculate bounds for this floor
-        xs = [rm.x for rm in fl.rooms] + [rm.x + rm.width for rm in fl.rooms]
-        ys = [rm.y for rm in fl.rooms] + [rm.y + rm.depth for rm in fl.rooms]
-        min_x, max_x = min(xs), max(xs)
-        min_y, max_y = min(ys), max(ys)
-        
-        # Figure size based on floor dimensions
-        w = max_x - min_x
-        d = max_y - min_y
-        fig_w = max(8, w * 0.8 + 2)
-        fig_h = max(6, d * 0.8 + 2)
-        
-        fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-        _render_single_floor(ax, fl, spec, floor_offset_x=-min_x)
-        
-        # Set limits with padding
-        ax.set_xlim(-1, w + 1)
-        ax.set_ylim(-1, d + 1)
-        ax.set_aspect("equal")
-        ax.axis("off")
-        
-        # Grid
-        _draw_grid(ax, -1, w + 1, -1, d + 1)
-        
-        # Title of the individual plan
-        floor_title = f"Floor {floor_num}" if floor_num > 0 else "Ground Floor Plan"
-        fig.suptitle(
-            f"AI Architect — {floor_title}\nStyle: {spec.style.title()} | Scale: 1:100",
-            fontsize=12, fontweight="bold", color=TITLE_COLOR, y=0.95
-        )
-        
-        # North arrow
-        _draw_north_arrow(ax, w + 0.5, d + 0.5)
-        # Scale bar
-        _draw_scale_bar(ax, 0.5, -0.5, scale_m=min(5.0, w/2))
-        
-        fig.tight_layout()
-        fig.savefig(out_path, dpi=180, bbox_inches="tight", facecolor="white")
-        plt.close(fig)
-        saved_paths.append(out_path)
+        min_rm_x = min(rm.x for rm in fl.rooms)
+        bounds = _render_single_floor(ax, fl, spec, floor_offset_x=offset_x - min_rm_x)
+        all_bounds.append(bounds)
+        fw = max(rm.x + rm.width for rm in fl.rooms) - min_rm_x
+        offset_x += fw + gap
 
-    return saved_paths
+    # Set limits
+    if all_bounds:
+        g_min_x = min(b[0] for b in all_bounds) - 2
+        g_max_x = max(b[1] for b in all_bounds) + 2
+        g_min_y = min(b[2] for b in all_bounds) - 2
+        g_max_y = max(b[3] for b in all_bounds) + 2
+    else:
+        g_min_x, g_max_x, g_min_y, g_max_y = -1, 11, -1, 9
+
+    ax.set_xlim(g_min_x, g_max_x)
+    ax.set_ylim(g_min_y, g_max_y)
+    ax.set_aspect("equal")
+    ax.axis("off")
+
+    # Grid
+    _draw_grid(ax, g_min_x, g_max_x, g_min_y, g_max_y)
+
+    # Title
+    fig.suptitle(
+        f"AI Architect — Floor Plan  |  Style: {spec.style.title()}  |  "
+        f"{len(spec.floors)} Floor{'s' if len(spec.floors) > 1 else ''}",
+        fontsize=13, fontweight="bold", color=TITLE_COLOR, y=0.98,
+    )
+
+    # North arrow + scale bar
+    _draw_north_arrow(ax, g_max_x - 1.2, g_min_y + 0.5)
+    bar_len = min(5.0, (g_max_x - g_min_x) / 4)
+    _draw_scale_bar(ax, g_min_x + 0.5, g_min_y + 0.3, scale_m=bar_len)
+
+    # Legend
+    legend_elements = [
+        patches.Patch(facecolor=DOOR_COLOR, edgecolor="none", label="Door"),
+        patches.Patch(facecolor=WINDOW_COLOR, edgecolor="none", label="Window"),
+        patches.Patch(facecolor="#F5F5F0", edgecolor=WALL_COLOR, linewidth=1.5, label="Wall"),
+        patches.Patch(facecolor="none", edgecolor=HATCH_COLOR, hatch="///", label="Wet Area"),
+    ]
+    ax.legend(handles=legend_elements, loc="lower right", fontsize=7,
+              framealpha=0.9, edgecolor="#CCCCCC")
+
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    fig.savefig(out_path, dpi=200, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    return out_path

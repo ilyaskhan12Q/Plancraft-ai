@@ -2,42 +2,12 @@
 
 // ── Plot ──────────────────────────────────────────────────────────────────────
 
-class Setbacks {
-  final double front;
-  final double back;
-  final double left;
-  final double right;
-
-  const Setbacks({
-    this.front = 0.0,
-    this.back = 0.0,
-    this.left = 0.0,
-    this.right = 0.0,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'front': front,
-        'back': back,
-        'left': left,
-        'right': right,
-      };
-
-  factory Setbacks.fromJson(Map<String, dynamic> j) => Setbacks(
-        front: (j['front'] as num?)?.toDouble() ?? 0.0,
-        back: (j['back'] as num?)?.toDouble() ?? 0.0,
-        left: (j['left'] as num?)?.toDouble() ?? 0.0,
-        right: (j['right'] as num?)?.toDouble() ?? 0.0,
-      );
-}
-
 class PlotSpec {
   final double length;
   final double width;
   final String unit;
   final int floors;
   final String orientation;
-  final String plotType;
-  final Setbacks setbacks;
 
   const PlotSpec({
     required this.length,
@@ -45,8 +15,6 @@ class PlotSpec {
     this.unit = 'meters',
     this.floors = 1,
     this.orientation = 'north',
-    this.plotType = 'standard',
-    this.setbacks = const Setbacks(),
   });
 
   Map<String, dynamic> toJson() => {
@@ -55,8 +23,6 @@ class PlotSpec {
         'unit': unit,
         'floors': floors,
         'orientation': orientation,
-        'plot_type': plotType,
-        'setbacks': setbacks.toJson(),
       };
 }
 
@@ -106,7 +72,6 @@ class GenerateRequest {
   final String? description;
   final String? sitePhotoKey;
   final String? stylePhotoKey;
-  final Map<int, String>? floorPreferences;
 
   const GenerateRequest({
     required this.plot,
@@ -117,7 +82,6 @@ class GenerateRequest {
     this.description,
     this.sitePhotoKey,
     this.stylePhotoKey,
-    this.floorPreferences,
   });
 
   Map<String, dynamic> toJson() => {
@@ -129,7 +93,6 @@ class GenerateRequest {
         if (description != null) 'description': description,
         if (sitePhotoKey != null) 'site_photo_key': sitePhotoKey,
         if (stylePhotoKey != null) 'style_photo_key': stylePhotoKey,
-        if (floorPreferences != null) 'floor_preferences': floorPreferences,
       };
 }
 
@@ -141,7 +104,6 @@ class VariantResult {
   final String? renderUrl;
   final String? modelUrl;
   final String? stlUrl;
-  final List<String> previews;
 
   const VariantResult({
     required this.variant,
@@ -149,7 +111,6 @@ class VariantResult {
     this.renderUrl,
     this.modelUrl,
     this.stlUrl,
-    this.previews = const [],
   });
 
   factory VariantResult.fromJson(Map<String, dynamic> j) => VariantResult(
@@ -158,9 +119,6 @@ class VariantResult {
         renderUrl: j['render_url'] as String?,
         modelUrl: j['model_url'] as String?,
         stlUrl: j['stl_url'] as String?,
-        previews: (j['previews'] as List<dynamic>? ?? [])
-            .map((e) => e.toString())
-            .toList(),
       );
 }
 
