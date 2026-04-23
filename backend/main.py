@@ -44,12 +44,16 @@ from app.api.routes.status import router as status_router
 from app.api.routes.upload import router as upload_router
 from app.api.routes.export import router as export_router
 from app.api.routes.customize import router as customize_router
+from app.api.routes.concept import router as concept_router
+from app.api.routes.interior import router as interior_router
 
 app.include_router(generate_router)
 app.include_router(status_router)
 app.include_router(upload_router)
 app.include_router(export_router)
 app.include_router(customize_router)
+app.include_router(concept_router)
+app.include_router(interior_router)
 
 from fastapi.responses import FileResponse
 

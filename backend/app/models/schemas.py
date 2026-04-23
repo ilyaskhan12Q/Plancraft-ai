@@ -140,3 +140,112 @@ class CustomizeRequest(BaseModel):
     roof_type: Optional[str] = None
     facade_material: Optional[str] = None
     window_type: Optional[str] = None
+
+
+# ─────────────────────────── Concept Art ─────────────────────────────────────
+
+class ConceptArtRequest(BaseModel):
+    style: str = "modern"
+    description: str = ""
+    inspirations: List[str] = Field(default_factory=list)
+    mood: Optional[str] = None
+    building_type: str = "residential"
+    num_concepts: int = 4
+
+class ConceptIdea(BaseModel):
+    name: str
+    description: str
+    features: List[str] = Field(default_factory=list)
+    color_palette: List[str] = Field(default_factory=list)
+    materials: List[str] = Field(default_factory=list)
+    render_prompt: str
+
+class ConceptArtResponse(BaseModel):
+    concepts: List[ConceptIdea] = Field(default_factory=list)
+    raw_response: str
+
+
+# ─────────────────────────── Interior Design ─────────────────────────────────
+
+class InteriorRoomRequest(BaseModel):
+    name: str
+    style: str = "modern"
+    width: float
+    depth: float
+    floor: int
+
+class InteriorDesignRequest(BaseModel):
+    rooms: List[InteriorRoomRequest]
+    overall_style: str = "modern"
+
+class RoomInterior(BaseModel):
+    room_name: str
+    furniture: List[str] = Field(default_factory=list)
+    color_scheme: Dict[str, str] = Field(default_factory=dict)
+    materials: Dict[str, str] = Field(default_factory=dict)
+    lighting: List[str] = Field(default_factory=list)
+    decor_style: str
+    estimated_budget_usd: int
+
+class InteriorDesignResponse(BaseModel):
+    rooms: List[RoomInterior] = Field(default_factory=list)
+    raw_response: str
+
+
+# ─────────────────────────── Critique ────────────────────────────────────────
+
+class CritiquePoint(BaseModel):
+    category: str
+    score: int
+    feedback: str
+    suggestion: str
+
+class DesignCritique(BaseModel):
+    overall_score: float
+    overall_verdict: str
+    points: List[CritiquePoint] = Field(default_factory=list)
+    strengths: List[str] = Field(default_factory=list)
+    weaknesses: List[str] = Field(default_factory=list)
+    top_recommendations: List[str] = Field(default_factory=list)
+    raw_response: str
+
+
+# ─────────────────────────── Cost Estimation & Materials ─────────────────────
+
+class BillOfQuantities(BaseModel):
+    bricks: int
+    cement_bags_50kg: float
+    steel_kg: float
+    paint_litres: float
+    sand_m3: float
+    aggregate_m3: float
+    tiles_sqft: float
+
+class CostReport(BaseModel):
+    total_area_m2: float
+    total_area_sqft: float
+    floor_areas: Dict[str, float]
+    budget_tier: str
+    region: str
+    cost_pkr_low: int
+    cost_pkr_mid: int
+    cost_pkr_high: int
+    cost_usd_low: int
+    cost_usd_mid: int
+    cost_usd_high: int
+    bill_of_quantities: BillOfQuantities
+
+class MaterialAlternative(BaseModel):
+    current_material: str
+    alternative_material: str
+    component: str
+    cost_savings_pct: float
+    sustainability_score: int
+    pros: List[str]
+    cons: List[str]
+
+class OptimizationReport(BaseModel):
+    alternatives: List[MaterialAlternative]
+    total_potential_savings_pct: float
+    sustainability_score: float
+    summary: str

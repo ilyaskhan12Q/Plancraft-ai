@@ -12,14 +12,12 @@ A few resources to get you started if this is your first Flutter project:
 - [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
 - [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
 
-<<<<<<< HEAD
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
-=======
+
 [Features](#-features) · [Architecture](#-architecture) · [Quick Start](#-quick-start) · [API Reference](#-api-reference) · [Contributing](#-contributing)
 
-</div>
 
 ---
 
@@ -40,6 +38,7 @@ samples, guidance on mobile development, and a full API reference.
 ###  3D Rendering & Export
 - **Blender headless rendering** — Full 3D exterior renders produced by Blender (EEVEE) in PNG format
 - **Professional Archimesh Integration** — Automated placement of realistic doors and windows using the Archimesh Blender add-on
+
 - **GLB model export** — Import directly into Blender, Three.js, or any glTF-compatible viewer
 - **STL export** — Ready for 3D printing or further structural engineering workflows
 - Physically-based materials (walls, glass, doors, roofing, ground plane)
@@ -373,4 +372,4 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 If you find this project useful, please give it a star ⭐ it helps us grow!
 
 </div>
->>>>>>> parent of 3be616c (Update README.md to reflect Cycles rendering engine transition)
+</div>

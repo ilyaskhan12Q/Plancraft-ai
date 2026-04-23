@@ -4,6 +4,10 @@ GET /export/{job_id}/floorplan  → 2D floor plan PNG
 GET /export/{job_id}/render     → 3D render PNG
 GET /export/{job_id}/model      → GLB 3D model
 GET /export/{job_id}/stl        → STL for 3D printing
+GET /export/{job_id}/cost-report→ Cost estimation report (JSON)
+GET /export/{job_id}/critique   → Design critique report (JSON)
+GET /export/{job_id}/interior   → Interior design report (JSON)
+GET /export/{job_id}/materials  → Material optimization report (JSON)
 GET /export/{job_id}/links      → JSON with all URLs
 """
 from __future__ import annotations
@@ -69,20 +73,43 @@ async def export_dxf(job_id: str):
                         filename=f"floor_plan_{job_id}.dxf")
 
 
+@router.get("/export/{job_id}/cost-report")
+async def export_cost_report(job_id: str):
+    p = _require(_job_dir(job_id) / "cost_report.json")
+    return FileResponse(str(p), media_type="application/json")
+
+
+@router.get("/export/{job_id}/critique")
+async def export_critique(job_id: str):
+    p = _require(_job_dir(job_id) / "critique.json")
+    return FileResponse(str(p), media_type="application/json")
+
+
+@router.get("/export/{job_id}/interior")
+async def export_interior(job_id: str):
+    p = _require(_job_dir(job_id) / "interior.json")
+    return FileResponse(str(p), media_type="application/json")
+
+
+@router.get("/export/{job_id}/materials")
+async def export_materials(job_id: str):
+    p = _require(_job_dir(job_id) / "materials.json")
+    return FileResponse(str(p), media_type="application/json")
+
+
 @router.get("/export/{job_id}/links")
 async def export_links(job_id: str):
     base = f"{_base_url()}/export/{job_id}"
     jd = _job_dir(job_id)
     return JSONResponse({
         "job_id": job_id,
-        "floorplan": f"{base}/floorplan"
-                     if (jd / "floorplan" / "floor_plan.png").exists() else None,
-        "render": f"{base}/render"
-                  if (jd / "render" / "render.png").exists() else None,
-        "model": f"{base}/model"
-                 if (jd / "render" / "model.glb").exists() else None,
-        "stl": f"{base}/stl"
-               if (jd / "render" / "model.stl").exists() else None,
-        "dxf": f"{base}/dxf"
-               if (jd / "floorplan" / "floor_plan.dxf").exists() else None,
+        "floorplan": f"{base}/floorplan" if (jd / "floorplan" / "floor_plan.png").exists() else None,
+        "render": f"{base}/render" if (jd / "render" / "render.png").exists() else None,
+        "model": f"{base}/model" if (jd / "render" / "model.glb").exists() else None,
+        "stl": f"{base}/stl" if (jd / "render" / "model.stl").exists() else None,
+        "dxf": f"{base}/dxf" if (jd / "floorplan" / "floor_plan.dxf").exists() else None,
+        "cost_report": f"{base}/cost-report" if (jd / "cost_report.json").exists() else None,
+        "critique": f"{base}/critique" if (jd / "critique.json").exists() else None,
+        "interior": f"{base}/interior" if (jd / "interior.json").exists() else None,
+        "materials": f"{base}/materials" if (jd / "materials.json").exists() else None,
     })

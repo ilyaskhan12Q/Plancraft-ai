@@ -63,6 +63,32 @@ DEFAULT_SPEC = BuildingSpec(
     ],
 )
 
+# ─────────────────────────── Style Archetypes ─────────────────────────────────
+
+_STYLE_ARCHETYPES = {
+    "low": (
+        "Budget Efficient",
+        "Focus on simple rectangular layouts, load-bearing walls, local brick, "
+        "and basic finishes. Minimize corridors and use shared walls to reduce cost."
+    ),
+    "medium": (
+        "Contemporary Practical",
+        "Balance aesthetics and cost. Use clean modern lines, standard windows, "
+        "good cross-ventilation, and durable finishes."
+    ),
+    "high": (
+        "Premium Modern",
+        "Emphasize large open-plan living, floor-to-ceiling windows, double-height "
+        "spaces, premium facade cladding, and designer lighting integration."
+    ),
+    "luxury": (
+        "Ultra-Luxury Signature",
+        "Create a landmark design with dramatic cantilevers, glass curtain walls, "
+        "infinity-edge features, smart-home infrastructure, separate guest wings, "
+        "and resort-style amenities."
+    ),
+}
+
 # ─────────────────────────── Schema Snippet ───────────────────────────────────
 
 _SCHEMA_HINT = """
@@ -112,31 +138,32 @@ def _build_prompt(
     plot = request.plot
     rms = request.rooms
 
-<<<<<<< HEAD
     # Pick style archetype
     budget_key = request.budget if request.budget in _STYLE_ARCHETYPES else "medium"
     archetype_name, archetype_guide = _STYLE_ARCHETYPES[budget_key]
 
-<<<<<<< HEAD
+    # Marla hint for South Asian context
+    plot_area_sqm = plot.length * plot.width
+    marla_hint = f"{plot_area_sqm / 25.2929:.1f} marla" if "south" in request.region.lower() else f"{plot_area_sqm:.0f}m²"
+
     ctx = f"""You are a world-class Lead Architect specializing in {request.region} residential design.
-=======
-    ctx = f"""You are a senior licensed architect with 20 years of experience in {request.region} residential design.
 Your designs are functional, structurally sound, and optimised for the client's budget.
->>>>>>> parent of a8c1d73 (Enhance 2D design with multi-floor support, detailed plot inputs, and 2026 architectural reasoning)
 
 ## Style Persona: {archetype_name}
 {archetype_guide}
 
 ## Project Brief
-<<<<<<< HEAD
 - Plot Size: {plot.length}m × {plot.width}m ({marla_hint})
-- Plot Type: {plot.plot_type}, Road-facing: {plot.orientation}
-- Setbacks: Front={plot.setbacks.front}m, Back={plot.setbacks.back}m, Sides={plot.setbacks.left}m/{plot.setbacks.right}m
 - Floors: {plot.floors}
+- Plot orientation / road-facing: {plot.orientation}
 - Rooms requested: {rms.bedrooms} bedrooms, {rms.bathrooms} bathrooms, living={rms.living_room}, kitchen={rms.kitchen}, dining={rms.dining}, garage={rms.garage}, study={rms.study}
+- Style: {request.preferred_style}
+- Budget: {request.budget}
+- Region: {request.region}
+- Client notes: {request.description or 'None'}
 
-## Engineering & Pakistani Architectural Standards (MANDATORY)
-1. **The Drawing Room (Guest Room)**: MUST be near the main entrance with a separate door for guests.
+## Engineering & Architectural Standards (MANDATORY)
+1. **Drawing Room (Guest Room)**: MUST be near the main entrance with a separate door for guests.
 2. **TV Lounge**: Central circulation hub for the family.
 3. **Attached Bathrooms**: EVERY bedroom MUST have an attached bathroom.
 4. **Layout**: Use a logical, leak-proof grid. NO OVERLAPPING ROOMS.
@@ -145,28 +172,6 @@ Your designs are functional, structurally sound, and optimised for the client's 
 - Create a distinct and logical layout for EVERY floor.
 - Respond ONLY with a single valid JSON object following this schema:
 {_SCHEMA_HINT}
-=======
-- Plot: {plot.length}m × {plot.width}m ({plot.length * plot.width:.0f}m² = {plot.length * plot.width * 10.764:.0f} sqft)
-- Floors: {plot.floors}, Road-facing: {plot.orientation}
-- Rooms requested: {rms.bedrooms} bedrooms, {rms.bathrooms} bathrooms,
-=======
-    ctx = f"""You are a professional architect. Generate a complete building design spec.
-
-## Project Brief
-- Plot: {plot.length}m × {plot.width}m, {plot.floors} floor(s), facing {plot.orientation}
-- Rooms: {rms.bedrooms} bedrooms, {rms.bathrooms} bathrooms,
->>>>>>> parent of 046ab37 (feat: integrate cost estimator and design critique)
-  living={rms.living_room}, kitchen={rms.kitchen}, dining={rms.dining},
-  garage={rms.garage}, study={rms.study}
-- Style: {request.preferred_style}
-- Budget: {request.budget}
-- Region: {request.region}
-<<<<<<< HEAD
-- Client notes: {request.description or 'None'}
->>>>>>> parent of a8c1d73 (Enhance 2D design with multi-floor support, detailed plot inputs, and 2026 architectural reasoning)
-=======
-- Notes: {request.description or 'None'}
->>>>>>> parent of 046ab37 (feat: integrate cost estimator and design critique)
 """
     if site:
         ctx += f"\n## Site Analysis\n{site.raw or ''}\n"
@@ -274,7 +279,7 @@ class ArchitectAgent:
         for attempt in range(max_retries + 1):
             try:
                 response = self._client.models.generate_content(
-                    model="gemini-flash-lite-latest",
+                    model="gemini-2.5-flash",
                     contents=prompt,
                 )
                 text = response.text or ""

@@ -76,6 +76,10 @@ def run_pipeline(self, job_id: str, request_json):
     from app.blender.floor_plan_renderer import render_floor_plan
     from app.blender.script_generator import generate_blender_script
     from app.blender.runner import run_blender_script
+    from app.agents.critique_agent import CritiqueAgent
+    from app.services.cost_estimator import CostEstimator
+    from app.services.material_optimizer import MaterialOptimizer
+    from app.agents.interior_agent import InteriorDesignAgent
 
     # Deserialise request
     if isinstance(request_json, str):
@@ -151,6 +155,30 @@ def run_pipeline(self, job_id: str, request_json):
         # ── Step 6: Blender render ────────────────────────────────────────────
         update_progress(job_id, 0.50, "Rendering 3D exterior (this takes a few minutes)…")
         blender_result = run_blender_script(script, str(render_dir), "modern")
+
+        # ── Step 7: Cost Estimation ──────────────────────────────────────────
+        update_progress(job_id, 0.70, "Calculating construction cost estimates…")
+        cost_estimator = CostEstimator()
+        cost_report = cost_estimator.estimate(spec, request.budget, request.region)
+        (job_dir / "cost_report.json").write_text(cost_report.model_dump_json(indent=2))
+
+        # ── Step 8: Material Optimization ────────────────────────────────────
+        update_progress(job_id, 0.75, "Optimizing material alternatives…")
+        material_optimizer = MaterialOptimizer()
+        materials_report = material_optimizer.optimize(spec, request.budget)
+        (job_dir / "materials.json").write_text(materials_report.model_dump_json(indent=2))
+
+        # ── Step 9: Design Critique ──────────────────────────────────────────
+        update_progress(job_id, 0.80, "Generating expert design critique…")
+        critique_agent = CritiqueAgent()
+        critique_report = critique_agent.critique(spec)
+        (job_dir / "critique.json").write_text(critique_report.model_dump_json(indent=2))
+
+        # ── Step 10: Interior Design ─────────────────────────────────────────
+        update_progress(job_id, 0.90, "Generating interior design suggestions…")
+        interior_agent = InteriorDesignAgent()
+        interior_report = interior_agent.generate_from_spec(spec, request.preferred_style)
+        (job_dir / "interior.json").write_text(interior_report.model_dump_json(indent=2))
 
         # ── Build result URLs ──────────────────────────────────────────────────
         def url(path: Optional[str]) -> Optional[str]:
